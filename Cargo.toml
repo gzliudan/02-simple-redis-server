@@ -1,5 +1,6 @@
 [package]
-name = "template"
+name = "simple-redis-server"
+description = "A simple redis server written in Rust"
 version = "0.1.0"
 edition = "2021"
 
