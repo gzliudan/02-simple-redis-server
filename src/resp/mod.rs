@@ -33,7 +33,7 @@ use enum_dispatch::enum_dispatch;
 use thiserror::Error;
 
 pub use self::{
-    array::{RespArray, RespNullArray},
+    array::RespArray,
     bulk_string::{BulkString, NullBulkString},
     frame::RespFrame,
     map::RespMap,
