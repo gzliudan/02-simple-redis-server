@@ -34,6 +34,7 @@ pub trait CommandExecutor {
 pub enum Command {
     Get(Get),
     Set(Set),
+    Echo(Echo),
     HGet(HGet),
     HSet(HSet),
     HGetAll(HGetAll),
@@ -50,6 +51,11 @@ pub struct Get {
 pub struct Set {
     key: String,
     value: RespFrame,
+}
+
+#[derive(Debug)]
+pub struct Echo {
+    message: String,
 }
 
 #[derive(Debug)]
@@ -100,6 +106,7 @@ impl TryFrom<RespArray> for Command {
                 match cmd.as_ref().to_ascii_lowercase().as_slice() {
                     b"get" => Ok(Get::try_from(v)?.into()),
                     b"set" => Ok(Set::try_from(v)?.into()),
+                    b"echo" => Ok(Echo::try_from(v)?.into()),
                     b"hget" => Ok(HGet::try_from(v)?.into()),
                     b"hset" => Ok(HSet::try_from(v)?.into()),
                     b"hgetall" => Ok(HGetAll::try_from(v)?.into()),
