@@ -70,17 +70,19 @@ impl TryFrom<RespArray> for Command {
     type Error = CommandError;
     fn try_from(v: RespArray) -> Result<Self, Self::Error> {
         match v.first() {
-            Some(RespFrame::BulkString(ref cmd)) => match cmd.as_ref() {
-                b"get" => Ok(Get::try_from(v)?.into()),
-                b"set" => Ok(Set::try_from(v)?.into()),
-                b"hget" => Ok(HGet::try_from(v)?.into()),
-                b"hset" => Ok(HSet::try_from(v)?.into()),
-                b"hgetall" => Ok(HGetAll::try_from(v)?.into()),
-                _ => Err(CommandError::InvalidCommand(format!(
-                    "Invalid command: {}",
-                    String::from_utf8_lossy(cmd.as_ref())
-                ))),
-            },
+            Some(RespFrame::BulkString(ref cmd)) => {
+                match cmd.as_ref().to_ascii_lowercase().as_slice() {
+                    b"get" => Ok(Get::try_from(v)?.into()),
+                    b"set" => Ok(Set::try_from(v)?.into()),
+                    b"hget" => Ok(HGet::try_from(v)?.into()),
+                    b"hset" => Ok(HSet::try_from(v)?.into()),
+                    b"hgetall" => Ok(HGetAll::try_from(v)?.into()),
+                    _ => Err(CommandError::InvalidCommand(format!(
+                        "Invalid command: {}",
+                        String::from_utf8_lossy(cmd.as_ref())
+                    ))),
+                }
+            }
             _ => Err(CommandError::InvalidCommand(
                 "Command must have a BulkString as the first argument".to_string(),
             )),
@@ -134,19 +136,26 @@ mod tests {
     use bytes::BytesMut;
 
     #[test]
-    fn test_command() -> Result<()> {
+    fn test_lowercase_get() -> Result<()> {
         let mut buf = BytesMut::new();
         buf.extend_from_slice(b"*2\r\n$3\r\nget\r\n$5\r\nhello\r\n");
-
         let frame = RespArray::decode(&mut buf)?;
-
         let cmd: Command = frame.try_into()?;
-
         let backend = Backend::new();
-
         let ret = cmd.execute(&backend);
         assert_eq!(ret, RespFrame::Null(RespNull));
+        Ok(())
+    }
 
+    #[test]
+    fn test_uppercase_get() -> Result<()> {
+        let mut buf = BytesMut::new();
+        buf.extend_from_slice(b"*2\r\n$3\r\nGET\r\n$5\r\nhello\r\n");
+        let frame = RespArray::decode(&mut buf)?;
+        let cmd: Command = frame.try_into()?;
+        let backend = Backend::new();
+        let ret = cmd.execute(&backend);
+        assert_eq!(ret, RespFrame::Null(RespNull));
         Ok(())
     }
 }
