@@ -33,14 +33,8 @@ use enum_dispatch::enum_dispatch;
 use thiserror::Error;
 
 pub use self::{
-    array::RespArray,
-    bulk_string::{BulkString, NullBulkString},
-    frame::RespFrame,
-    map::RespMap,
-    null::RespNull,
-    set::RespSet,
-    simple_error::SimpleError,
-    simple_string::SimpleString,
+    array::RespArray, bulk_string::BulkString, frame::RespFrame, map::RespMap, null::RespNull,
+    set::RespSet, simple_error::SimpleError, simple_string::SimpleString,
 };
 
 const BUFFER_CAP: usize = 4096;
