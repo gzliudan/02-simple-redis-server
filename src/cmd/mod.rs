@@ -68,6 +68,7 @@ pub struct HSet {
 #[derive(Debug)]
 pub struct HGetAll {
     key: String,
+    sort: bool,
 }
 
 #[derive(Debug)]
