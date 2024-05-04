@@ -1,10 +1,11 @@
-mod hmap;
-mod map;
-
-use crate::{Backend, RespArray, RespError, RespFrame, SimpleString};
 use enum_dispatch::enum_dispatch;
 use lazy_static::lazy_static;
 use thiserror::Error;
+
+use crate::{Backend, RespArray, RespError, RespFrame, SimpleString};
+
+mod hmap;
+mod map;
 
 lazy_static! {
     static ref RESP_OK: RespFrame = SimpleString::new("OK").into();

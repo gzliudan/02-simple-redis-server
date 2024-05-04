@@ -1,5 +1,7 @@
-use super::{extract_args, validate_command, CommandExecutor, HGet, HGetAll, HSet, RESP_OK};
-use crate::{cmd::CommandError, RespArray, RespFrame, RespMap};
+use super::{
+    extract_args, validate_command, CommandError, CommandExecutor, HGet, HGetAll, HSet, RESP_OK,
+};
+use crate::{RespArray, RespFrame, RespMap};
 
 impl CommandExecutor for HGet {
     fn execute(self, backend: &crate::Backend) -> RespFrame {
