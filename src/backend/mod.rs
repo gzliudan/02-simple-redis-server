@@ -72,6 +72,11 @@ impl Backend {
             .or_default()
             .insert(field.into())
     }
+
+    // Checks if the set contains a specific key.
+    pub fn sismember(&self, key: &str, member: &str) -> bool {
+        self.hset.get(key).map_or(false, |v| v.contains(member))
+    }
 }
 
 #[cfg(test)]

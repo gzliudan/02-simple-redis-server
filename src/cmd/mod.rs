@@ -41,6 +41,7 @@ pub enum Command {
     HGetAll(HGetAll),
     HMGet(HMGet),
     SAdd(SAdd),
+    SIsMember(SIsMember),
 
     // unrecognized command
     Unrecognized(Unrecognized),
@@ -108,6 +109,21 @@ pub struct SAdd {
     members: Vec<String>,
 }
 
+// SISMEMBER key member
+// SISMEMBER myset "one": "*3\r\n$9\r\nSISMEMBER\r\n$5\r\nmyset\r\n$3\r\none\r\n"
+// SISMEMBER myset "two": "*3\r\n$9\r\nSISMEMBER\r\n$5\r\nmyset\r\n$3\r\ntwo\r\n"
+// redis> SADD myset "one"
+// (integer) 1
+// redis> SISMEMBER myset "one"
+// (integer) 1
+// redis> SISMEMBER myset "two"
+// (integer) 0
+#[derive(Debug)]
+pub struct SIsMember {
+    key: String,
+    member: String,
+}
+
 #[derive(Debug)]
 pub struct Unrecognized;
 
@@ -143,6 +159,7 @@ impl TryFrom<RespArray> for Command {
                     b"hmget" => Ok(HMGet::try_from(v)?.into()),
                     b"hgetall" => Ok(HGetAll::try_from(v)?.into()),
                     b"sadd" => Ok(SAdd::try_from(v)?.into()),
+                    b"sismember" => Ok(SIsMember::try_from(v)?.into()),
                     _ => Ok(Unrecognized.into()),
                 }
             }
