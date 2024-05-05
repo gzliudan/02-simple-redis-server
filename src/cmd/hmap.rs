@@ -1,5 +1,6 @@
 use super::{
-    extract_args, validate_command, CommandError, CommandExecutor, HGet, HGetAll, HSet, RESP_OK,
+    extract_args, validate_command, CommandError, CommandExecutor, HGet, HGetAll, HMGet, HSet,
+    RESP_OK,
 };
 use crate::{BulkString, RespArray, RespFrame};
 
@@ -35,6 +36,20 @@ impl CommandExecutor for HGetAll {
             }
             None => RespArray::new([]).into(),
         }
+    }
+}
+
+impl CommandExecutor for HMGet {
+    fn execute(self, backend: &crate::Backend) -> RespFrame {
+        let fields = self
+            .fields
+            .iter()
+            .map(|f| match backend.hget(&self.hash, f) {
+                Some(value) => value,
+                None => RespFrame::Null(crate::RespNull),
+            })
+            .collect::<Vec<_>>();
+        RespFrame::Array(RespArray(fields))
     }
 }
 
@@ -76,6 +91,41 @@ impl TryFrom<RespArray> for HGetAll {
             }),
             _ => Err(CommandError::InvalidArgument("Invalid key".to_string())),
         }
+    }
+}
+
+impl TryFrom<RespArray> for HMGet {
+    type Error = CommandError;
+    fn try_from(value: RespArray) -> Result<Self, Self::Error> {
+        let len = value.len();
+        match len {
+            0 => {
+                return Err(CommandError::InvalidCommand(
+                    "hmget does not accept null array".to_string(),
+                ))
+            }
+            1..=2 => {
+                return Err(CommandError::InvalidCommand(format!(
+                    "hmget command must have at least 2 argument, got {len}",
+                )))
+            }
+            _ => validate_command(&value, &["hmget"], len - 1)?,
+        }
+
+        let mut args = extract_args(value, 1)?.into_iter();
+        let hash = match args.next() {
+            Some(RespFrame::BulkString(key)) => String::from_utf8(key.0)?,
+            _ => return Err(CommandError::InvalidArgument("Invalid key".to_string())),
+        };
+        let mut fields = vec![];
+        loop {
+            match args.next() {
+                Some(RespFrame::BulkString(key)) => fields.push(String::from_utf8(key.0)?),
+                None => break,
+                _ => return Err(CommandError::InvalidArgument("Invalid key".to_string())),
+            };
+        }
+        Ok(HMGet { hash, fields })
     }
 }
 

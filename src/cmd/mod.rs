@@ -38,6 +38,7 @@ pub enum Command {
     HGet(HGet),
     HSet(HSet),
     HGetAll(HGetAll),
+    HMGet(HMGet),
     // unrecognized command
     Unrecognized(Unrecognized),
 }
@@ -77,6 +78,26 @@ pub struct HGetAll {
     sort: bool,
 }
 
+// HSET myhash field1 "Hello"
+// HGET myhash field1
+// HSET myhash field2 "World"
+// HGET myhash field2
+// HMGET myhash field1 field2
+// HMGET myhash field1 field2 nofield
+// "*5\r\n$5\r\nHMGET\r\n$6\r\nmyhash\r\n$6\r\nfield1\r\n$6\r\nfield2\r\n$7\r\nnofield\r\n"
+#[derive(Debug)]
+pub struct HMGet {
+    hash: String,
+    fields: Vec<String>,
+}
+
+// SADD myset "one"
+// "*3\r\n$4\r\nSADD\r\n$5\r\nmyset\r\n$3\r\none\r\n"
+// SISMEMBER myset "one"
+// "*3\r\n$9\r\nSISMEMBER\r\n$5\r\nmyset\r\n$3\r\none\r\n"
+// SISMEMBER myset "two"
+// "*3\r\n$9\r\nSISMEMBER\r\n$5\r\nmyset\r\n$3\r\ntwo\r\n"
+
 #[derive(Debug)]
 pub struct Unrecognized;
 
@@ -109,6 +130,7 @@ impl TryFrom<RespArray> for Command {
                     b"echo" => Ok(Echo::try_from(v)?.into()),
                     b"hget" => Ok(HGet::try_from(v)?.into()),
                     b"hset" => Ok(HSet::try_from(v)?.into()),
+                    b"hmget" => Ok(HMGet::try_from(v)?.into()),
                     b"hgetall" => Ok(HGetAll::try_from(v)?.into()),
                     _ => Ok(Unrecognized.into()),
                 }
