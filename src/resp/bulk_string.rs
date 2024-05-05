@@ -50,6 +50,9 @@ impl RespDecoder for BulkString {
 
     fn expect_length(buf: &[u8]) -> Result<usize, RespError> {
         let (end, len) = parse_length(buf, Self::PREFIX)?;
+        if len > buf.len() {
+            return Err(RespError::NotComplete);
+        }
         Ok(end + CRLF_LEN + len + CRLF_LEN)
     }
 }
