@@ -1,5 +1,5 @@
 use crate::RespFrame;
-use dashmap::DashMap;
+use dashmap::{DashMap, DashSet};
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -9,6 +9,7 @@ pub struct Backend(Arc<BackendInner>);
 #[derive(Debug)]
 pub struct BackendInner {
     pub(crate) map: DashMap<String, RespFrame>,
+    pub(crate) hset: DashMap<String, DashSet<String>>,
     pub(crate) hmap: DashMap<String, DashMap<String, RespFrame>>,
 }
 
@@ -30,6 +31,7 @@ impl Default for BackendInner {
     fn default() -> Self {
         Self {
             map: DashMap::new(),
+            hset: DashMap::new(),
             hmap: DashMap::new(),
         }
     }
@@ -61,5 +63,29 @@ impl Backend {
 
     pub fn hgetall(&self, key: &str) -> Option<DashMap<String, RespFrame>> {
         self.hmap.get(key).map(|v| v.clone())
+    }
+
+    // Inserts a key into the set. Returns true if the key was not already in the set.
+    pub fn sadd(&self, key: impl Into<String>, field: impl Into<String>) -> bool {
+        self.hset
+            .entry(key.into())
+            .or_default()
+            .insert(field.into())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use anyhow::Result;
+
+    #[test]
+    fn test_sadd() -> Result<()> {
+        let backend = Backend::new();
+        let result = backend.sadd("myset", "Hello");
+        assert!(result);
+        let result = backend.sadd("myset", "Hello");
+        assert!(!result);
+        Ok(())
     }
 }

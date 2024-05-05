@@ -5,6 +5,7 @@ use thiserror::Error;
 use crate::{Backend, RespArray, RespError, RespFrame, SimpleString};
 
 mod hmap;
+mod hset;
 mod map;
 
 lazy_static! {
@@ -39,6 +40,8 @@ pub enum Command {
     HSet(HSet),
     HGetAll(HGetAll),
     HMGet(HMGet),
+    SAdd(SAdd),
+
     // unrecognized command
     Unrecognized(Unrecognized),
 }
@@ -91,12 +94,19 @@ pub struct HMGet {
     fields: Vec<String>,
 }
 
-// SADD myset "one"
-// "*3\r\n$4\r\nSADD\r\n$5\r\nmyset\r\n$3\r\none\r\n"
-// SISMEMBER myset "one"
-// "*3\r\n$9\r\nSISMEMBER\r\n$5\r\nmyset\r\n$3\r\none\r\n"
-// SISMEMBER myset "two"
-// "*3\r\n$9\r\nSISMEMBER\r\n$5\r\nmyset\r\n$3\r\ntwo\r\n"
+// SADD key member [member ...]
+// SADD myset "Hello": "*3\r\n$4\r\nSADD\r\n$5\r\nmyset\r\n$5\r\nHello\r\n"
+// SADD myset "World": "*3\r\n$4\r\nSADD\r\n$5\r\nmyset\r\n$5\r\nWorld\r\n"
+// SADD myset "Hello" "World": "*4\r\n$4\r\nSADD\r\n$5\r\nmyset\r\n$5\r\nHello\r\n$5\r\nWorld\r\n"
+// redis> SADD myset "Hello"
+// (integer) 1
+// redis> SADD myset "Hello"
+// (integer) 0
+#[derive(Debug)]
+pub struct SAdd {
+    key: String,
+    members: Vec<String>,
+}
 
 #[derive(Debug)]
 pub struct Unrecognized;
@@ -132,6 +142,7 @@ impl TryFrom<RespArray> for Command {
                     b"hset" => Ok(HSet::try_from(v)?.into()),
                     b"hmget" => Ok(HMGet::try_from(v)?.into()),
                     b"hgetall" => Ok(HGetAll::try_from(v)?.into()),
+                    b"sadd" => Ok(SAdd::try_from(v)?.into()),
                     _ => Ok(Unrecognized.into()),
                 }
             }
