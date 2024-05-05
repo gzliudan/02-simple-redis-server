@@ -152,9 +152,8 @@ impl TryFrom<RespArray> for HSet {
 
 #[cfg(test)]
 mod tests {
-    use crate::RespDecoder;
-
     use super::*;
+    use crate::RespDecoder;
     use anyhow::Result;
     use bytes::BytesMut;
 
@@ -162,13 +161,10 @@ mod tests {
     fn test_hget_from_resp_array() -> Result<()> {
         let mut buf = BytesMut::new();
         buf.extend_from_slice(b"*3\r\n$4\r\nhget\r\n$3\r\nmap\r\n$5\r\nhello\r\n");
-
         let frame = RespArray::decode(&mut buf)?;
-
         let result: HGet = frame.try_into()?;
         assert_eq!(result.key, "map");
         assert_eq!(result.field, "hello");
-
         Ok(())
     }
 
@@ -176,12 +172,9 @@ mod tests {
     fn test_hgetall_from_resp_array() -> Result<()> {
         let mut buf = BytesMut::new();
         buf.extend_from_slice(b"*2\r\n$7\r\nhgetall\r\n$3\r\nmap\r\n");
-
         let frame = RespArray::decode(&mut buf)?;
-
         let result: HGetAll = frame.try_into()?;
         assert_eq!(result.key, "map");
-
         Ok(())
     }
 
@@ -189,14 +182,11 @@ mod tests {
     fn test_hset_from_resp_array() -> Result<()> {
         let mut buf = BytesMut::new();
         buf.extend_from_slice(b"*4\r\n$4\r\nhset\r\n$3\r\nmap\r\n$5\r\nhello\r\n$5\r\nworld\r\n");
-
         let frame = RespArray::decode(&mut buf)?;
-
         let result: HSet = frame.try_into()?;
         assert_eq!(result.key, "map");
         assert_eq!(result.field, "hello");
         assert_eq!(result.value, RespFrame::BulkString(b"world".into()));
-
         Ok(())
     }
 
@@ -238,6 +228,20 @@ mod tests {
             BulkString::from("world1").into(),
         ]);
         assert_eq!(result, expected.into());
+        Ok(())
+    }
+
+    #[test]
+    fn test_hmget_from_resp_array() -> Result<()> {
+        let mut buf = BytesMut::new();
+        buf.extend_from_slice(b"*5\r\n$5\r\nHMGET\r\n$6\r\nmyhash\r\n$6\r\nfield1\r\n$6\r\nfield2\r\n$7\r\nnofield\r\n");
+        let frame = RespArray::decode(&mut buf)?;
+        let result: HMGet = frame.try_into()?;
+        assert_eq!(result.hash, "myhash");
+        assert_eq!(result.fields.len(), 3);
+        assert_eq!(result.fields[0], "field1");
+        assert_eq!(result.fields[1], "field2");
+        assert_eq!(result.fields[2], "nofield");
         Ok(())
     }
 }
